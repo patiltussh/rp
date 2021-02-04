@@ -217,7 +217,7 @@ readinessProbe:
 ##
 resources:
   requests:
-    memory: 4Gi
+    memory: 256Mi
 
 ## Create a bucket after minio install
 ##
