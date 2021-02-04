@@ -1,0 +1,17 @@
+---
+apiVersion: "v1"
+kind: "PersistentVolume"
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+  labels: 
+    app: {{ .Values.name }}
+    type: local
+spec:
+  persistentVolumeReclaimPolicy: {{ .Values.policy }}
+  capacity:
+    storage: {{ .Values.capacity }}
+  accessModes: 
+    - {{ .Values.accessMode }}
+  hostPath:
+    path: {{ .Values.path }}
