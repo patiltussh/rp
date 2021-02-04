@@ -1,135 +1,121 @@
 {{/* vim: set filetype=mustache: */}}
-
 {{/*
-Return the proper MinIO(TM) image name
+Expand the name of the chart.
 */}}
-{{- define "minio.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
-
+{{- define "minio.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
-Return the proper MinIO(TM) Client image name
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
 */}}
-{{- define "minio.clientImage" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.clientImage "global" .Values.global) }}
+{{- define "minio.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
-Return the proper image name (for the init container volume-permissions image)
+Create chart name and version as used by the chart label.
 */}}
-{{- define "minio.volumePermissions.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.volumePermissions.image "global" .Values.global) }}
+{{- define "minio.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for networkpolicy.
+*/}}
+{{- define "minio.networkPolicy.apiVersion" -}}
+{{- if semverCompare ">=1.4-0, <1.7-0" .Capabilities.KubeVersion.GitVersion -}}
+{{- print "extensions/v1beta1" -}}
+{{- else if semverCompare "^1.7-0" .Capabilities.KubeVersion.GitVersion -}}
+{{- print "networking.k8s.io/v1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for deployment.
+*/}}
+{{- define "minio.deployment.apiVersion" -}}
+{{- if semverCompare "<1.9-0" .Capabilities.KubeVersion.GitVersion -}}
+{{- print "apps/v1beta2" -}}
+{{- else -}}
+{{- print "apps/v1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for statefulset.
+*/}}
+{{- define "minio.statefulset.apiVersion" -}}
+{{- if .Capabilities.APIVersions.Has "apps/v1beta2" -}}
+{{- print "apps/v1beta2" -}}
+{{- else -}}
+{{- print "apps/v1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for ingress.
+*/}}
+{{- define "minio.ingress.apiVersion" -}}
+{{- if semverCompare "<1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+{{- print "extensions/v1beta1" -}}
+{{- else -}}
+{{- print "networking.k8s.io/v1beta1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Determine service account name for deployment or statefulset.
+*/}}
+{{- define "minio.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- default (include "minio.fullname" .) .Values.serviceAccount.name | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- default "default" .Values.serviceAccount.name -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Properly format optional additional arguments to Minio binary
+*/}}
+{{- define "minio.extraArgs" -}}
+{{- range .Values.extraArgs -}}
+{{ " " }}{{ . }}
+{{- end -}}
 {{- end -}}
 
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "minio.imagePullSecrets" -}}
-{{- include "common.images.pullSecrets" (dict "images" (list .Values.image .Values.clientImage .Values.volumePermissions.image) "global" .Values.global) -}}
-{{- end -}}
-
 {{/*
-Return MinIO(TM) accessKey
+Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
+but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
+Also, we can not use a single if because lazy evaluation is not an option
 */}}
-{{- define "minio.accessKey" -}}
-{{- $accessKey := coalesce .Values.global.minio.accessKey .Values.accessKey.password -}}
-{{- if $accessKey }}
-    {{- $accessKey -}}
-{{- else if (not .Values.accessKey.forcePassword) }}
-    {{- randAlphaNum 10 -}}
-{{- else -}}
-    {{ required "An Access Key is required!" .Values.accessKey.password }}
+{{- if .Values.global }}
+{{- if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{- range .Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets: 
+    {{ toYaml .Values.imagePullSecrets }}
 {{- end -}}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets: 
+    {{ toYaml .Values.imagePullSecrets }}
 {{- end -}}
-
-{{/*
-Return MinIO(TM) secretKey
-*/}}
-{{- define "minio.secretKey" -}}
-{{- $secretKey := coalesce .Values.global.minio.secretKey .Values.secretKey.password -}}
-{{- if $secretKey }}
-    {{- $secretKey -}}
-{{- else if (not .Values.secretKey.forcePassword) }}
-    {{- randAlphaNum 40 -}}
-{{- else -}}
-    {{ required "A Secret Key is required!" .Values.secretKey.password }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Get the credentials secret.
-*/}}
-{{- define "minio.secretName" -}}
-{{- if .Values.global.minio.existingSecret }}
-    {{- printf "%s" .Values.global.minio.existingSecret -}}
-{{- else if .Values.existingSecret -}}
-    {{- printf "%s" .Values.existingSecret -}}
-{{- else -}}
-    {{- printf "%s" (include "common.names.fullname" .) -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return true if a secret object should be created
-*/}}
-{{- define "minio.createSecret" -}}
-{{- if .Values.global.minio.existingSecret }}
-{{- else if .Values.existingSecret -}}
-{{- else -}}
-    {{- true -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Returns the proper service account name depending if an explicit service account name is set
-in the values file. If the name is not set it will default to either common.names.fullname if serviceAccount.create
-is true or default otherwise.
-*/}}
-{{- define "minio.serviceAccountName" -}}
-    {{- if .Values.serviceAccount.create -}}
-        {{ default (include "common.names.fullname" .) .Values.serviceAccount.name }}
-    {{- else -}}
-        {{ default "default" .Values.serviceAccount.name }}
-    {{- end -}}
-{{- end -}}
-
-{{/*
-Compile all warnings into a single message, and call fail.
-*/}}
-{{- define "minio.validateValues" -}}
-{{- $messages := list -}}
-{{- $messages := append $messages (include "minio.validateValues.mode" .) -}}
-{{- $messages := append $messages (include "minio.validateValues.replicaCount" .) -}}
-{{- $messages := without $messages "" -}}
-{{- $message := join "\n" $messages -}}
-
-{{- if $message -}}
-{{-   printf "\nVALUES VALIDATION:\n%s" $message | fail -}}
-{{- end -}}
-{{- end -}}
-
-{{/* Validate values of MinIO(TM) - must provide a valid mode ("distributed" or "standalone") */}}
-{{- define "minio.validateValues.mode" -}}
-{{- if and (ne .Values.mode "distributed") (ne .Values.mode "standalone") -}}
-minio: mode
-    Invalid mode selected. Valid values are "distributed" and
-    "standalone". Please set a valid mode (--set mode="xxxx")
-{{- end -}}
-{{- end -}}
-
-{{/* Validate values of MinIO(TM) - number of replicas must be even, greater than 4 and lower than 32 */}}
-{{- define "minio.validateValues.replicaCount" -}}
-{{- $replicaCount := int .Values.statefulset.replicaCount }}
-{{- if and (eq .Values.mode "distributed") (or (eq (mod $replicaCount 2) 1) (lt $replicaCount 4) (gt $replicaCount 32)) -}}
-minio: replicaCount
-    Number of replicas must be even, greater than 4 and lower than 32!!
-    Please set a valid number of replicas (--set statefulset.replicaCount=X)
-{{- end -}}
-{{- end -}}
-
-{{/* Check if there are rolling tags in the images */}}
-{{- define "minio.checkRollingTags" -}}
-{{- include "common.warnings.rollingTag" .Values.image }}
-{{- include "common.warnings.rollingTag" .Values.clientImage }}
 {{- end -}}
