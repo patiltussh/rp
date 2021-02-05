@@ -223,19 +223,13 @@ spec:
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-{{- with .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- include "minio.imagePullSecrets" . | indent 6 }}
-{{- with .Values.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- with .Values.tolerations }}
+        node-role.kubernetes.io/dedicated: report-portal
       tolerations:
-{{ toYaml . | indent 8 }}
-{{- end }}
+        - key: node-role.kubernetes.io/dedicated
+          operator: Equal
+          value: report-portal
+          effect: NoSchedule 
       volumes:
         {{- if and (not .Values.gcsgateway.enabled) (not .Values.azuregateway.enabled) (not .Values.s3gateway.enabled) (not .Values.b2gateway.enabled) }}
         - name: export
