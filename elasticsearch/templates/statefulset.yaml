@@ -136,13 +136,13 @@ spec:
       {{- end }}
       initContainers:
       {{- if .Values.sysctlInitContainer.enabled }}
-      - name: fix-the-volume-permission
-        image: "{{ .Values.initimage }}"
-        command: 
+      - command:
         - sh
         - -c
         - chown -R 1000:1000 /usr/share/elasticsearch/data
+        image: "{{ .Values.initimage }}"
         imagePullPolicy: Always
+        name: fix-the-volume-permission
         resources: {}
         securityContext:
           privileged: true
@@ -207,7 +207,6 @@ spec:
         - key: node-role.kubernetes.io/dedicated
           operator: Equal
           value: "{{ .Values.app }}"
-          effect: NoSchedule 
       containers:
       - name: "{{ template "elasticsearch.name" . }}"
         securityContext:
