@@ -17,6 +17,13 @@ spec:
         {{ $key }}: {{ $value | quote }}
         {{- end }}
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/dedicated: report-portal
+      tolerations:
+        - key: node-role.kubernetes.io/dedicated
+          operator: Equal
+          value: report-portal
+          effect: NoSchedule     
       containers:
       - env:
         - name: LOGGING_LEVEL_ORG_HIBERNATE_SQL
