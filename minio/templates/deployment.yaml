@@ -224,12 +224,12 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
       nodeSelector:
-        node-role.kubernetes.io/dedicated: report-portal
+        node-role.kubernetes.io/dedicated: "{{ .Values.app }}"
       tolerations:
         - key: node-role.kubernetes.io/dedicated
           operator: Equal
-          value: report-portal
-          effect: NoSchedule 
+          value: "{{ .Values.app }}"
+          effect: NoSchedule      
       volumes:
         {{- if and (not .Values.gcsgateway.enabled) (not .Values.azuregateway.enabled) (not .Values.s3gateway.enabled) (not .Values.b2gateway.enabled) }}
         - name: export
