@@ -20,6 +20,13 @@ spec:
         {{- end }}
     spec:
       restartPolicy: Never
+      nodeSelector:
+        node-role.kubernetes.io/dedicated: report-portal
+      tolerations:
+        - key: node-role.kubernetes.io/dedicated
+          operator: Equal
+          value: report-portal
+          effect: NoSchedule       
       containers:
       - env:
         - name: POSTGRES_SERVER
