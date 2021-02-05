@@ -1,0 +1,15 @@
+dependencies:
+- name: postgresql
+  repository: https://charts.helm.sh/stable
+  version: 8.6.2
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 7.5.6
+- name: elasticsearch
+  repository: https://helm.elastic.co
+  version: 7.6.1
+- name: minio
+  repository: https://charts.helm.sh/stable
+  version: 5.0.33
+digest: sha256:b493b96e6ceeb7d173f493ce6fa6483cf11d9db70cf1c1ec258b3f6fda9e125b
+generated: "2021-02-03T11:29:32.1430703+05:30"
