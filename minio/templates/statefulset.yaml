@@ -82,6 +82,13 @@ spec:
         runAsGroup: {{ .Values.securityContext.runAsGroup }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
 {{- end }}
+      nodeSelector:
+        node-role.kubernetes.io/dedicated: "{{ .Values.app }}"
+      tolerations:
+        - key: node-role.kubernetes.io/dedicated
+          operator: Equal
+          value: "{{ .Values.app }}"
+          effect: NoSchedule
       containers:
         - name: {{ .Chart.Name }}
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -172,13 +179,6 @@ spec:
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      nodeSelector:
-        node-role.kubernetes.io/dedicated: "{{ .Values.app }}"
-      tolerations:
-        - key: node-role.kubernetes.io/dedicated
-          operator: Equal
-          value: "{{ .Values.app }}"
-          effect: NoSchedule
       volumes:
         - name: minio-user
           secret:
