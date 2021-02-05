@@ -1,17 +1,15 @@
----
-apiVersion: "v1"
-kind: "PersistentVolume"
+apiVersion: v1
+kind: PersistentVolume
 metadata:
-  name: {{ .Values.appname }}
-  namespace: {{ .Values.namespace }}
-  labels: 
-    app: {{ .Values.appname }}
-    type: local
+  name: elastic1
+  namespace: reportportal
+  labels:
+    app: elastic
+    type: local 
 spec:
-  persistentVolumeReclaimPolicy: {{ .Values.policy }}
+  persistentVolumeReclaimPolicy: Retain
   capacity:
-    storage: {{ .Values.capacity }}
-  accessModes: 
-    - {{ .Values.accessMode }}
+    storage: 30Gi
+  accessModes: [ "ReadWriteOnce" ] 
   hostPath:
-    path: {{ .Values.mountpath }}
+    path: "/mnt"

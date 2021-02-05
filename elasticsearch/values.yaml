@@ -1,14 +1,6 @@
 ---
 clusterName: "elasticsearch"
 nodeGroup: "master"
-initimage: "busybox"
-app: "report-portal"
-appname: "elastic"
-namespace: "reportportal"
-policy: "Retain"
-capacity: "30Gi"
-accessMode: "ReadWriteOnce"
-mountpath: "/mnt"
 
 # The service that non master groups will try to connect to when joining the cluster
 # This should be set to clusterName + "-" + nodeGroup for your master group
@@ -21,7 +13,7 @@ roles:
   ingest: "true"
   data: "true"
 
-replicas: 1
+replicas: 3
 minimumMasterNodes: 2
 
 esMajorVersion: ""

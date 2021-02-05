@@ -140,7 +140,7 @@ spec:
         - sh
         - -c
         - chown -R 1000:1000 /usr/share/elasticsearch/data
-        image: "{{ .Values.initimage }}"
+        image: busybox
         imagePullPolicy: Always
         name: fix-the-volume-permission
         resources: {}
@@ -202,11 +202,12 @@ spec:
 {{ tpl .Values.extraInitContainers . | indent 6 }}
       {{- end }}
       nodeSelector:
-        node-role.kubernetes.io/dedicated: "{{ .Values.app }}"
+        node-role.kubernetes.io/dedicated: report-portal
       tolerations:
         - key: node-role.kubernetes.io/dedicated
           operator: Equal
-          value: "{{ .Values.app }}"
+          value: report-portal
+          effect: NoSchedule 
       containers:
       - name: "{{ template "elasticsearch.name" . }}"
         securityContext:
