@@ -135,7 +135,6 @@ spec:
 {{ toYaml .Values.imagePullSecrets | indent 8 }}
       {{- end }}
       initContainers:
-      {{- if .Values.sysctlInitContainer.enabled }}
       - command:
         - sh
         - -c
@@ -152,6 +151,7 @@ spec:
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/data
           name: elasticsearch-master
+      {{- if .Values.sysctlInitContainer.enabled }}
       - name: configure-sysctl
         securityContext:
           runAsUser: 0
