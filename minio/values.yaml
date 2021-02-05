@@ -186,7 +186,7 @@ affinity: {}
 ## user and group NOTE: securityContext is only enabled if persistence.enabled=true
 securityContext:
   enabled: true
-  runAsUser: 0
+  runAsUser: 1000
   runAsGroup: 1000
   fsGroup: 1000
 
@@ -217,7 +217,7 @@ readinessProbe:
 ##
 resources:
   requests:
-    memory: 256Mi
+    memory: 4Gi
 
 ## Create a bucket after minio install
 ##
